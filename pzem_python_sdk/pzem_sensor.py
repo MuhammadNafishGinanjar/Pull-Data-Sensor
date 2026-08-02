@@ -169,7 +169,7 @@ class PZEMSensor:
 # =======================================================
 # KONFIGURASI KONEKSI DEFAULT
 # =======================================================
-PZEM_PORT = "COM_PORT_RS485"
+PZEM_PORT = "USB1"
 PZEM_BAUDRATE = 9600
 PZEM_SLAVE_ID = 1
 PZEM_TIMEOUT = 1.0
