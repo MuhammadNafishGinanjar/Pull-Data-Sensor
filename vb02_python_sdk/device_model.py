@@ -99,6 +99,9 @@ class DeviceModel:
         self.serialConfig.baud = baud
         # Modbus device address
         self.ADDR = ADDR
+        # Background threads (kept so close/stop can join them before touching the port)
+        self.readThread = None
+        self.loopThread = None
 
     # Get CRC checksum
     def get_crc(self, datas, dlen):
@@ -141,8 +144,8 @@ class DeviceModel:
             self.serialPort = serial.Serial(self.serialConfig.portName, self.serialConfig.baud, timeout=0.5)
             self.isOpen = True
             # Start a thread to continuously listen for serial data
-            t = threading.Thread(target=self.readDataTh, args=("Data-Received-Thread", 10,))
-            t.start()
+            self.readThread = threading.Thread(target=self.readDataTh, args=("Data-Received-Thread", 10,))
+            self.readThread.start()
         except SerialException:
             print(f"Gagal membuka port {self.serialConfig.portName}")
 
@@ -164,9 +167,13 @@ class DeviceModel:
 
     # Close device
     def closeDevice(self):
+        # Signal the reader thread to stop and wait for it before touching the port,
+        # otherwise it can still be mid-read when the port closes underneath it.
+        self.isOpen = False
+        if self.readThread is not None and self.readThread.is_alive():
+            self.readThread.join(timeout=1.0)
         if self.serialPort is not None:
             self.serialPort.close()
-        self.isOpen = False
 
     # region Data parsing
 
@@ -314,8 +321,8 @@ class DeviceModel:
         # Enable loop reading control
         self.loop = True
         # Start reading thread
-        t = threading.Thread(target=self.loopRead, args=())  # Start a thread to receive data
-        t.start()
+        self.loopThread = threading.Thread(target=self.loopRead, args=())  # Start a thread to receive data
+        self.loopThread.start()
 
     # Loop reading thread
     def loopRead(self):
@@ -325,7 +332,11 @@ class DeviceModel:
 
     # Stop looped reading
     def stopLoopRead(self):
+        # Wait for the write loop to actually stop before the caller closes the port,
+        # otherwise it can still be mid-write when the port closes underneath it.
         self.loop = False
+        if self.loopThread is not None and self.loopThread.is_alive():
+            self.loopThread.join(timeout=1.0)
 
     # Unlock
     def unlock(self):
