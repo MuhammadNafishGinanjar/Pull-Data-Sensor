@@ -1,0 +1,11 @@
+{
+  "sensors": [
+    {
+      "machine_id": "MCH-002",
+      "machine_name": "Forging Machine",
+      "port": "/dev/ttyUSB0",
+      "baudrate": 9600,
+      "address": 80
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+dnspython==2.8.0
+future==1.0.0
+iso8601==2.1.0
+pymongo==4.17.0
+pyserial==3.5
+PyYAML==6.0.3
+requests==2.34.2
