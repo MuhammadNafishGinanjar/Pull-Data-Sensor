@@ -14,8 +14,6 @@ class PZEMParserTest(unittest.TestCase):
             0x0000,
             0x0000,
             0x01F4,
-            0x0064,
-            0x0000,
         ]
 
         data = decode_measurement_registers(registers)
@@ -26,14 +24,16 @@ class PZEMParserTest(unittest.TestCase):
         self.assertEqual(data["active_power_w"], 220.0)
         self.assertEqual(data["energy_wh"], 0)
         self.assertEqual(data["frequency_hz"], 50.0)
-        self.assertEqual(data["power_factor"], 1.0)
-        self.assertFalse(data["alarm"])
+        self.assertEqual(set(data.keys()), {
+            "voltage_v", "current_a", "active_power_w",
+            "energy_wh", "energy_kwh", "frequency_hz",
+        })
 
     def test_read_request_uses_function_04_and_valid_crc(self):
-        request = build_read_request(slave_id=1, start_address=0, quantity=10)
+        request = build_read_request(slave_id=1, start_address=0, quantity=8)
         print(f"[test_read_request_uses_function_04_and_valid_crc] request = {request.hex().upper()}")
 
-        self.assertEqual(request, bytes.fromhex("01 04 00 00 00 0A 70 0D"))
+        self.assertEqual(request, bytes.fromhex("01 04 00 00 00 08 F1 CC"))
         self.assertEqual(int.from_bytes(request[-2:], "little"), crc16_modbus(request[:-2]))
 
 

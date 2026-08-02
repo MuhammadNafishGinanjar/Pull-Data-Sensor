@@ -33,9 +33,9 @@ def build_read_request(slave_id: int, start_address: int = 0, quantity: int = 10
 
 
 def decode_measurement_registers(registers: list[int]) -> dict[str, Any]:
-    """Ubah 10 input register PZEM-014/016 menjadi nilai engineering."""
-    if len(registers) != 10:
-        raise ValueError(f"Diperlukan 10 register, diterima {len(registers)}")
+    """Ubah 8 input register PZEM-014/016 (voltage..frequency) menjadi nilai engineering."""
+    if len(registers) != 8:
+        raise ValueError(f"Diperlukan 8 register, diterima {len(registers)}")
 
     current_raw = registers[1] | (registers[2] << 16)
     power_raw = registers[3] | (registers[4] << 16)
@@ -48,14 +48,11 @@ def decode_measurement_registers(registers: list[int]) -> dict[str, Any]:
         "energy_wh": energy_raw,
         "energy_kwh": energy_raw / 1000.0,
         "frequency_hz": registers[7] / 10.0,
-        "power_factor": registers[8] / 100.0,
-        "alarm": registers[9] == 0xFFFF,
-        "alarm_raw": registers[9],
     }
 
 
 class PZEMSensor:
-    REGISTER_COUNT = 10
+    REGISTER_COUNT = 8
 
     def __init__(
         self,
@@ -158,7 +155,7 @@ class PZEMSensor:
         self.serial_port.flush()
 
         frame = self._read_response()
-        registers = list(struct.unpack(">10H", frame[3:-2]))
+        registers = list(struct.unpack(f">{self.REGISTER_COUNT}H", frame[3:-2]))
         return decode_measurement_registers(registers)
 
     def __enter__(self) -> "PZEMSensor":
