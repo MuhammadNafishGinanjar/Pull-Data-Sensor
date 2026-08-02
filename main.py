@@ -111,12 +111,6 @@ def run_forging_machine():
                         "vx": data["velocity"]["x"],
                         "vy": data["velocity"]["y"],
                         "vz": data["velocity"]["z"],
-                        "dx": data["displacement"]["x"],
-                        "dy": data["displacement"]["y"],
-                        "dz": data["displacement"]["z"],
-                        "fx": data["frequency"]["x"],
-                        "fy": data["frequency"]["y"],
-                        "fz": data["frequency"]["z"],
                         "pressure": round(pressure, 2),
                     }
                     save_and_send(collection, FORGING_MACHINE_ID, FORGING_API_MACHINE_ID, readings)

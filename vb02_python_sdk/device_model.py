@@ -233,6 +233,11 @@ class DeviceModel:
                     value = value / 100
                     self.set(str(self.statReg), value)
                     self.statReg += 1
+                # VRMS parsing
+                elif self.statReg in (0x50, 0x5C, 0x68):
+                    value = value / 1000
+                    self.set("VRMS_" + str(self.statReg), value)
+                    self.statReg += 1
                 # Other registers
                 else:
                     self.set(str(self.statReg), value)
@@ -328,6 +333,12 @@ class DeviceModel:
     def loopRead(self):
         while self.loop:
             self.readReg(0x34, 19)
+            time.sleep(0.2)
+            self.readReg(0x50, 1)
+            time.sleep(0.2)
+            self.readReg(0x5C, 1)
+            time.sleep(0.2)
+            self.readReg(0x68, 1)
             time.sleep(0.2)
 
     # Stop looped reading

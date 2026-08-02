@@ -41,28 +41,14 @@ class VibrationSensor:
         self.device.closeDevice()
 
     def get_data(self):
-
         return {
-
             "velocity": {
-                "x": self.device.get("58"),
-                "y": self.device.get("59"),
-                "z": self.device.get("60")
-            },
-
-            "displacement": {
-                "x": self.device.get("65"),
-                "y": self.device.get("66"),
-                "z": self.device.get("67")
-            },
-
-            "frequency": {
-                "x": self.device.get("68"),
-                "y": self.device.get("69"),
-                "z": self.device.get("70")
+                "x": self.device.get("VRMS_80"),
+                "y": self.device.get("VRMS_92"),
+                "z": self.device.get("VRMS_104")
             }
         }
-        
+
 
 
 if __name__ == "__main__":
