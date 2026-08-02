@@ -1,10 +1,5 @@
 import socket
 import struct
-import time
-import os
-from datetime import datetime, timezone
-from pymongo import MongoClient
-import requests
 
 # =======================================================
 # KONFIGURASI FINS OMRON CP2E
@@ -15,7 +10,6 @@ PLC_NODE = 2
 MEM_D = 0x82
 REGISTER_ADDRESS = 872
 
-MACHINE_ID = "MCH-003"
 
 def get_local_ip_node(default_node=101):
     try:
@@ -27,26 +21,14 @@ def get_local_ip_node(default_node=101):
     except Exception:
         return default_node
 
+
 PC_NODE = get_local_ip_node(101)
 
-# =======================================================
-# KONFIGURASI MONGODB
-# =======================================================
-MONGO_URI = "mongodb+srv://naufalreswara7_db_user:admin123@cluster0.q0cqtdj.mongodb.net/?appName=Cluster0"
-DB_NAME = "cmms"
-COLLECTION_NAME = "temperature_sensor_reading"
 
-API_URL = "https://cmms-polmanbandung.site/api/ml/sensor-data"
-API_MACHINE_ID = "IND-001"
-
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-collection = db[COLLECTION_NAME]
-
-# =======================================================
 def build_fins_header(fin_cmd, sid=0x01):
     header = struct.pack('!BBBBBBBBBB', 0x80, 0x00, 0x02, 0x00, PLC_NODE, 0x00, 0x00, PC_NODE, 0x00, sid)
     return header + fin_cmd
+
 
 def read_memory(sock, mem_area_code, address, count=1):
     cmd_code = struct.pack('!BB', 0x01, 0x01)
@@ -77,7 +59,7 @@ def read_memory(sock, mem_area_code, address, count=1):
             words = []
             for i in range(0, len(data_bytes), 2):
                 if i + 1 < len(data_bytes):
-                    value = struct.unpack('!H', data_bytes[i:i+2])[0]
+                    value = struct.unpack('!H', data_bytes[i:i + 2])[0]
                     words.append(value)
             return words
         else:
@@ -85,6 +67,7 @@ def read_memory(sock, mem_area_code, address, count=1):
             print(f"PLC mengembalikan Error Code: 0x{end_code_1:02X} 0x{end_code_2:02X}")
             print(f"Full RAW Response: {raw_hex}")
     return None
+
 
 def read_temperature(sock):
     data_d = read_memory(sock, MEM_D, REGISTER_ADDRESS, count=2)
@@ -94,48 +77,8 @@ def read_temperature(sock):
         return temperature
     return None
 
-def save_to_mongo(temperature):
-    document = {
-        "machine_id": MACHINE_ID,
-        "timestamp": datetime.now(timezone.utc),
-        "temp": round(temperature, 2)
-    }
-    collection.insert_one(document)
-    print(f"[{MACHINE_ID}] Saved: {document}")
 
-    payload = {k: v for k, v in document.items() if k not in ("_id", "timestamp")}
-    payload["machine_id"] = API_MACHINE_ID
-    send_to_api(payload)
-
-def send_to_api(payload):
-    try:
-        response = requests.post(API_URL, json=payload, timeout=5)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        print(f"[API] Failed to send sensor data: {e}")
-
-def main():
+def create_socket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(3.0)
-    try:
-        while True:
-            try:
-                temperature = read_temperature(sock)
-                if temperature is not None:
-                    save_to_mongo(temperature)
-                else:
-                    print("Gagal membaca suhu, mencoba lagi...")
-            except socket.timeout:
-                print("[TIMEOUT] Tidak ada balasan dari PLC, mencoba lagi...")
-            except Exception as e:
-                print(f"Error saat membaca/menyimpan: {e}")
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("\nDihentikan oleh pengguna.")
-    finally:
-        sock.close()
-        client.close()
-        print("Selesai.")
-
-if __name__ == '__main__':
-    main()
+    return sock

@@ -1,12 +1,3 @@
 #!/bin/bash
 source venv/bin/activate
-
-(cd sensor_temperature && python3 main.py) &
-PID1=$!
-(cd vb02_python_sdk && python3 main.py) &
-PID2=$!
-(cd pzem_python_sdk && python3 main.py) &
-PID3=$!
-
-trap "kill $PID1 $PID2 $PID3" SIGINT SIGTERM
-wait $PID1 $PID2 $PID3
+python3 main.py

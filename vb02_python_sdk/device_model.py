@@ -91,7 +91,6 @@ class DeviceModel:
     # endregion  Calculate CRC
 
     def __init__(self, deviceName, portName, baud, ADDR):
-        print("初始化设备模型")
         # Device name (custom)
         self.deviceName = deviceName
         # Serial port name
@@ -141,17 +140,14 @@ class DeviceModel:
         try:
             self.serialPort = serial.Serial(self.serialConfig.portName, self.serialConfig.baud, timeout=0.5)
             self.isOpen = True
-            print("{}已打开".format(self.serialConfig.portName))
             # Start a thread to continuously listen for serial data
             t = threading.Thread(target=self.readDataTh, args=("Data-Received-Thread", 10,))
             t.start()
-            print("设备打开成功")
         except SerialException:
-            print("打开" + self.serialConfig.portName + "失败")
+            print(f"Gagal membuka port {self.serialConfig.portName}")
 
     # Serial data listening thread
     def readDataTh(self, threadName, delay):
-        print("启动" + threadName)
         while True:
             # If serial port is open
             if self.isOpen:
@@ -164,16 +160,13 @@ class DeviceModel:
                     print(ex)
             else:
                 time.sleep(0.1)
-                print("串口未打开")
                 break
 
     # Close device
     def closeDevice(self):
         if self.serialPort is not None:
             self.serialPort.close()
-            print("端口关闭了")
         self.isOpen = False
-        print("设备关闭了")
 
     # region Data parsing
 
@@ -326,11 +319,9 @@ class DeviceModel:
 
     # Loop reading thread
     def loopRead(self):
-        print("循环读取开始")
         while self.loop:
             self.readReg(0x34, 19)
             time.sleep(0.2)
-        print("循环读取结束")
 
     # Stop looped reading
     def stopLoopRead(self):

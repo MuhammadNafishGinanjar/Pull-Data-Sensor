@@ -1,40 +1,19 @@
-# PZEM-014/016 to MongoDB
+# PZEM-014/016 Modbus Driver
 
-Program ini membaca 10 Input Register PZEM melalui Modbus RTU Function 04,
-mengubah nilai mentah menjadi satuan teknik, kemudian menyimpan satu dokumen
-per pembacaan ke MongoDB.
+`pzem_sensor.py` membaca 10 Input Register PZEM melalui Modbus RTU Function 04
+dan mengubah nilai mentah menjadi satuan teknik (`PZEMSensor.read_measurements()`).
 
-## Persiapan
+Folder ini hanya bertugas mengambil data mentah dari sensor PZEM. Proses
+penggabungan dengan pembacaan suhu PLC, penyimpanan ke MongoDB, dan
+pengiriman ke API dilakukan terpusat di `main.py` pada root project, yang
+meng-import `PZEMSensor` dari folder ini. Konfigurasi port/baudrate/slave ID
+PZEM diatur lewat konstanta `PZEM_*` di `pzem_sensor.py`.
 
-1. Tutup Modbus Poll agar COM port tidak sedang dipakai program lain.
-2. Ubah `port`, `slave_id`, dan identitas mesin di `config.json`.
-3. Buat virtual environment dan pasang dependensi:
+## Pengujian parser (tanpa sensor fisik)
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-```
-
-4. Isi URI MongoDB pada sesi PowerShell yang sama:
-
-```powershell
-$env:MONGO_URI="mongodb+srv://USERNAME:PASSWORD@HOST/?retryWrites=true&w=majority"
-```
-
-5. Jalankan collector:
-
-```powershell
-python main.py
-```
-
-Data disimpan ke database `cmms`, collection `power_sensor_reading`. Nama
-database dan collection dapat diubah melalui `config.json`.
-
-## Pengujian tanpa sensor
-
-Pengujian parser memakai contoh respons yang tercantum pada datasheet:
-
-```powershell
-python -m unittest -v test_parser.py
+python -m pip install -r ../requirements.txt
+python -m unittest -v test_pzem_sensor.py
 ```

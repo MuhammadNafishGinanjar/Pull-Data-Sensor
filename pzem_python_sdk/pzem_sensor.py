@@ -167,3 +167,21 @@ class PZEMSensor:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.disconnect()
+
+
+# =======================================================
+# KONFIGURASI KONEKSI DEFAULT
+# =======================================================
+PZEM_PORT = "COM_PORT_RS485"
+PZEM_BAUDRATE = 9600
+PZEM_SLAVE_ID = 1
+PZEM_TIMEOUT = 1.0
+
+
+def create_default_sensor() -> "PZEMSensor":
+    return PZEMSensor(
+        port=PZEM_PORT,
+        baudrate=PZEM_BAUDRATE,
+        slave_id=PZEM_SLAVE_ID,
+        timeout=PZEM_TIMEOUT,
+    )

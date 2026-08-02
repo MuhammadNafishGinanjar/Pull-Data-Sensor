@@ -1,5 +1,26 @@
+import json
 import time
+from pathlib import Path
+
 import device_model
+
+CONFIG_PATH = Path(__file__).with_name("config.json")
+
+
+def load_config():
+    with CONFIG_PATH.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+def create_default_sensor():
+    config = load_config()
+    sensor_config = config["sensors"][0]
+    return VibrationSensor(
+        port=sensor_config["port"],
+        baudrate=sensor_config["baudrate"],
+        address=sensor_config["address"],
+    )
+
 
 class VibrationSensor:
     def __init__(self, port="/dev/ttyUSB0", baudrate=9600, address=0x50):
