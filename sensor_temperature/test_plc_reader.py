@@ -25,6 +25,7 @@ class PlcReaderTest(unittest.TestCase):
         sock.recvfrom.side_effect = [OSError("no data"), (response, ("plc", 9600))]
 
         temperature = plc_reader.read_temperature(sock)
+        print(f"[test_read_temperature_decodes_word_swapped_float] temperature = {temperature}")
 
         self.assertAlmostEqual(temperature, expected_temp, places=2)
 
@@ -33,7 +34,10 @@ class PlcReaderTest(unittest.TestCase):
         sock = MagicMock()
         sock.recvfrom.side_effect = [OSError("no data"), (response, ("plc", 9600))]
 
-        self.assertIsNone(plc_reader.read_temperature(sock))
+        temperature = plc_reader.read_temperature(sock)
+        print(f"[test_read_temperature_returns_none_on_error_end_code] temperature = {temperature}")
+
+        self.assertIsNone(temperature)
 
 
 if __name__ == "__main__":

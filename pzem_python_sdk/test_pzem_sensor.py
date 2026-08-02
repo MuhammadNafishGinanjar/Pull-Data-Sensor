@@ -19,6 +19,7 @@ class PZEMParserTest(unittest.TestCase):
         ]
 
         data = decode_measurement_registers(registers)
+        print(f"[test_datasheet_measurement_example] data = {data}")
 
         self.assertEqual(data["voltage_v"], 220.0)
         self.assertEqual(data["current_a"], 1.0)
@@ -30,6 +31,7 @@ class PZEMParserTest(unittest.TestCase):
 
     def test_read_request_uses_function_04_and_valid_crc(self):
         request = build_read_request(slave_id=1, start_address=0, quantity=10)
+        print(f"[test_read_request_uses_function_04_and_valid_crc] request = {request.hex().upper()}")
 
         self.assertEqual(request, bytes.fromhex("01 04 00 00 00 0A 70 0D"))
         self.assertEqual(int.from_bytes(request[-2:], "little"), crc16_modbus(request[:-2]))
