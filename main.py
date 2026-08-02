@@ -30,7 +30,7 @@ INDUCTION_COLLECTION = "induction_machine_reading"
 
 FORGING_MACHINE_ID = "MCH-002"
 FORGING_API_MACHINE_ID = "FRG-002"
-FORGING_COLLECTION = "vibration_sensor_reading"
+FORGING_COLLECTION = "forging_machine_reading"
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
@@ -95,31 +95,41 @@ def run_induction_machine():
 
 
 def run_forging_machine():
-    """Baca getaran (WTVB02), simpan, lalu kirim satu payload."""
+    """Baca getaran (WTVB02) + tekanan (PLC), gabungkan, simpan, lalu kirim satu payload."""
     collection = db[FORGING_COLLECTION]
     sensor = sensor_reader.create_default_sensor()
+    sock = plc_reader.create_socket()
     try:
         sensor.connect()
         while True:
             try:
                 data = sensor.get_data()
-                readings = {
-                    "vx": data["velocity"]["x"],
-                    "vy": data["velocity"]["y"],
-                    "vz": data["velocity"]["z"],
-                    "dx": data["displacement"]["x"],
-                    "dy": data["displacement"]["y"],
-                    "dz": data["displacement"]["z"],
-                    "fx": data["frequency"]["x"],
-                    "fy": data["frequency"]["y"],
-                    "fz": data["frequency"]["z"],
-                }
-                save_and_send(collection, FORGING_MACHINE_ID, FORGING_API_MACHINE_ID, readings)
+                pressure = plc_reader.read_pressure(sock)
+
+                if pressure is not None:
+                    readings = {
+                        "vx": data["velocity"]["x"],
+                        "vy": data["velocity"]["y"],
+                        "vz": data["velocity"]["z"],
+                        "dx": data["displacement"]["x"],
+                        "dy": data["displacement"]["y"],
+                        "dz": data["displacement"]["z"],
+                        "fx": data["frequency"]["x"],
+                        "fy": data["frequency"]["y"],
+                        "fz": data["frequency"]["z"],
+                        "pressure": round(pressure, 2),
+                    }
+                    save_and_send(collection, FORGING_MACHINE_ID, FORGING_API_MACHINE_ID, readings)
+                else:
+                    print("[Forging] Gagal membaca tekanan, mencoba lagi...")
+            except socket.timeout:
+                print("[Forging][TIMEOUT] Tidak ada balasan dari PLC, mencoba lagi...")
             except Exception as e:
                 print(f"[Forging] Error saat membaca/menyimpan: {e}")
             time.sleep(1)
     finally:
         sensor.disconnect()
+        sock.close()
 
 
 def main():

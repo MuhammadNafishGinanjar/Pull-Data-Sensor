@@ -39,6 +39,24 @@ class PlcReaderTest(unittest.TestCase):
 
         self.assertIsNone(temperature)
 
+    def test_read_pressure_decodes_word_swapped_float(self):
+        expected_pressure = 5.42
+        raw = struct.pack('>f', expected_pressure)
+        word0, word1 = struct.unpack('!HH', raw)
+        data_bytes = struct.pack('!HH', word1, word0)  # PLC menyimpan word ter-swap
+        response = bytes(12) + b'\x00\x00' + data_bytes
+
+        sock = MagicMock()
+        sock.recvfrom.side_effect = [OSError("no data"), (response, ("plc", 9600))]
+
+        pressure = plc_reader.read_pressure(sock)
+        print(f"[test_read_pressure_decodes_word_swapped_float] pressure = {pressure}")
+
+        self.assertAlmostEqual(pressure, expected_pressure, places=2)
+
+    def test_temperature_and_pressure_use_different_registers(self):
+        self.assertNotEqual(plc_reader.REGISTER_ADDRESS, plc_reader.PRESSURE_REGISTER_ADDRESS)
+
 
 if __name__ == "__main__":
     unittest.main()

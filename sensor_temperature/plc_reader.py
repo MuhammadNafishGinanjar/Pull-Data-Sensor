@@ -8,7 +8,8 @@ PLC_IP = '192.168.1.3'
 PLC_PORT = 9600
 PLC_NODE = 2
 MEM_D = 0x82
-REGISTER_ADDRESS = 872
+REGISTER_ADDRESS = 872          # Suhu (Mesin Induksi)
+PRESSURE_REGISTER_ADDRESS = 646  # Tekanan (Mesin Forging)
 
 
 def get_local_ip_node(default_node=101):
@@ -69,13 +70,20 @@ def read_memory(sock, mem_area_code, address, count=1):
     return None
 
 
-def read_temperature(sock):
-    data_d = read_memory(sock, MEM_D, REGISTER_ADDRESS, count=2)
+def read_float_register(sock, address):
+    data_d = read_memory(sock, MEM_D, address, count=2)
     if data_d and len(data_d) == 2:
         raw_bytes = struct.pack('!HH', data_d[1], data_d[0])
-        temperature = struct.unpack('>f', raw_bytes)[0]
-        return temperature
+        return struct.unpack('>f', raw_bytes)[0]
     return None
+
+
+def read_temperature(sock):
+    return read_float_register(sock, REGISTER_ADDRESS)
+
+
+def read_pressure(sock):
+    return read_float_register(sock, PRESSURE_REGISTER_ADDRESS)
 
 
 def create_socket():
