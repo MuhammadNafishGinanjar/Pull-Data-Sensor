@@ -57,6 +57,25 @@ class PlcReaderTest(unittest.TestCase):
     def test_temperature_and_pressure_use_different_registers(self):
         self.assertNotEqual(plc_reader.REGISTER_ADDRESS, plc_reader.PRESSURE_REGISTER_ADDRESS)
 
+    def test_read_bit_decodes_on_off_status(self):
+        response = bytes(12) + b'\x00\x00' + bytes([0x01])  # ON
+        sock = MagicMock()
+        sock.recvfrom.side_effect = [OSError("no data"), (response, ("plc", 9600))]
+
+        bits = plc_reader.read_bit(sock, plc_reader.MEM_BIT_W, 67, 0)
+        print(f"[test_read_bit_decodes_on_off_status] bits = {bits}")
+
+        self.assertEqual(bits, [True])
+
+    def test_read_bit_decodes_off_status(self):
+        response = bytes(12) + b'\x00\x00' + bytes([0x00])  # OFF
+        sock = MagicMock()
+        sock.recvfrom.side_effect = [OSError("no data"), (response, ("plc", 9600))]
+
+        bits = plc_reader.read_bit(sock, plc_reader.MEM_BIT_W, 67, 1)
+
+        self.assertEqual(bits, [False])
+
 
 if __name__ == "__main__":
     unittest.main()

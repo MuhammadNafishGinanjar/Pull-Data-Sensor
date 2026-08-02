@@ -8,7 +8,8 @@ PLC_IP = '192.168.1.3'
 PLC_PORT = 9600
 PLC_NODE = 2
 MEM_D = 0x82
-REGISTER_ADDRESS = 872          # Suhu (Mesin Induksi)
+MEM_BIT_W = 0x31                 # W-Memory (Level Bit)
+REGISTER_ADDRESS = 872           # Suhu (Mesin Induksi)
 PRESSURE_REGISTER_ADDRESS = 646  # Tekanan (Mesin Forging)
 
 
@@ -31,9 +32,9 @@ def build_fins_header(fin_cmd, sid=0x01):
     return header + fin_cmd
 
 
-def read_memory(sock, mem_area_code, address, count=1):
+def _request_memory(sock, mem_area_code, address, bit_address, count):
     cmd_code = struct.pack('!BB', 0x01, 0x01)
-    addr_bytes = struct.pack('!B', mem_area_code) + struct.pack('!HB', address, 0x00)
+    addr_bytes = struct.pack('!B', mem_area_code) + struct.pack('!HB', address, bit_address)
     count_bytes = struct.pack('!H', count)
     req_data = cmd_code + addr_bytes + count_bytes
     packet = build_fins_header(req_data)
@@ -54,20 +55,31 @@ def read_memory(sock, mem_area_code, address, count=1):
     if len(resp) >= 14:
         end_code_1, end_code_2 = resp[12], resp[13]
         if end_code_1 == 0x00 and end_code_2 == 0x00:
-            data_bytes = resp[14:]
-            if len(data_bytes) < count * 2:
-                return None
-            words = []
-            for i in range(0, len(data_bytes), 2):
-                if i + 1 < len(data_bytes):
-                    value = struct.unpack('!H', data_bytes[i:i + 2])[0]
-                    words.append(value)
-            return words
+            return resp[14:]
         else:
             raw_hex = ' '.join([f"{b:02X}" for b in resp])
             print(f"PLC mengembalikan Error Code: 0x{end_code_1:02X} 0x{end_code_2:02X}")
             print(f"Full RAW Response: {raw_hex}")
     return None
+
+
+def read_memory(sock, mem_area_code, address, count=1):
+    data_bytes = _request_memory(sock, mem_area_code, address, 0x00, count)
+    if data_bytes is None or len(data_bytes) < count * 2:
+        return None
+    words = []
+    for i in range(0, len(data_bytes), 2):
+        if i + 1 < len(data_bytes):
+            words.append(struct.unpack('!H', data_bytes[i:i + 2])[0])
+    return words
+
+
+def read_bit(sock, mem_area_bit_code, word_address, bit_address, count=1):
+    """Baca status ON/OFF (Level Bit), misal untuk sinyal running/idle mesin."""
+    data_bytes = _request_memory(sock, mem_area_bit_code, word_address, bit_address, count)
+    if data_bytes is None or len(data_bytes) < count:
+        return None
+    return [byte_val == 1 for byte_val in data_bytes[:count]]
 
 
 def read_float_register(sock, address):
