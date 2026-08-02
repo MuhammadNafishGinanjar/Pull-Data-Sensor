@@ -5,6 +5,8 @@ source venv/bin/activate
 PID1=$!
 (cd vb02_python_sdk && python3 main.py) &
 PID2=$!
+(cd pzem_python_sdk && python3 main.py) &
+PID3=$!
 
-trap "kill $PID1 $PID2" SIGINT SIGTERM
-wait $PID1 $PID2
+trap "kill $PID1 $PID2 $PID3" SIGINT SIGTERM
+wait $PID1 $PID2 $PID3
