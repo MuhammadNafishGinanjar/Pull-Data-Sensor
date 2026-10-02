@@ -23,7 +23,7 @@ def create_default_sensor():
 
 
 class VibrationSensor:
-    def __init__(self, port="/dev/ttyUSB0", baudrate=9600, address=0x50):
+    def __init__(self, port="COM4", baudrate=9600, address=0x50):
         self.device = device_model.DeviceModel(
             "WTVB02",
             port,

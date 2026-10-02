@@ -12,17 +12,19 @@ ROOT_DIR = os.path.dirname(__file__)
 sys.path.append(os.path.join(ROOT_DIR, "sensor_temperature"))
 sys.path.append(os.path.join(ROOT_DIR, "pzem_python_sdk"))
 sys.path.append(os.path.join(ROOT_DIR, "vb02_python_sdk"))
+sys.path.append(os.path.join(ROOT_DIR, "adm4280_python_sdk"))
 
 import plc_reader
 import pzem_sensor
 import sensor_reader
+import adm4280_sensor
 
 # =======================================================
 # KONFIGURASI MONGODB & API
 # =======================================================
-MONGO_URI = "mongodb+srv://naufalreswara7_db_user:admin123@cluster0.q0cqtdj.mongodb.net/?appName=Cluster0"
+MONGO_URI = "mongodb+srv://ginanjarnafish_db_user:7MdrOsyavxTn88cl@cluster0.sijeilt.mongodb.net/cmms_db?appName=Cluster0"
 DB_NAME = "cmms"
-API_URL = "https://cmms-polmanbandung.site/api/ml/sensor-data"
+API_URL = "https://computerize-maintenance-management-system-production.up.railway.app/api/ml/sensor-data"
 
 INDUCTION_MACHINE_ID = "MCH-003"
 INDUCTION_API_MACHINE_ID = "IND-001"
@@ -62,14 +64,15 @@ def save_and_send(collection, machine_id, api_machine_id, readings):
 
 
 def run_induction_machine():
-    """Baca suhu (PLC) + daya (PZEM), gabungkan, simpan, lalu kirim satu payload."""
+    """Baca suhu (ADM-4280-C Modbus RTU) + daya (PZEM), gabungkan, simpan, lalu kirim satu payload."""
     collection = db[INDUCTION_COLLECTION]
-    sock = plc_reader.create_socket()
+    temp_sensor = adm4280_sensor.create_default_sensor()
     pzem = pzem_sensor.create_default_sensor()
     try:
+        temp_sensor.connect()
         while True:
             try:
-                temperature = plc_reader.read_temperature(sock)
+                temperature = temp_sensor.read_temperature()
 
                 power = None
                 try:
@@ -84,13 +87,11 @@ def run_induction_machine():
                     save_and_send(collection, INDUCTION_MACHINE_ID, INDUCTION_API_MACHINE_ID, readings)
                 else:
                     print("[Induksi] Gagal membaca suhu dan/atau daya, mencoba lagi...")
-            except socket.timeout:
-                print("[Induksi][TIMEOUT] Tidak ada balasan dari PLC, mencoba lagi...")
             except Exception as e:
                 print(f"[Induksi] Error saat membaca/menyimpan: {e}")
             time.sleep(1)
     finally:
-        sock.close()
+        temp_sensor.disconnect()
         pzem.disconnect()
 
 
@@ -104,18 +105,19 @@ def run_forging_machine():
         while True:
             try:
                 data = sensor.get_data()
-                pressure = plc_reader.read_pressure(sock)
+                pressure = None
+                try:
+                    pressure = plc_reader.read_pressure(sock)
+                except Exception:
+                    pass
 
-                if pressure is not None:
-                    readings = {
-                        "vx": data["velocity"]["x"],
-                        "vy": data["velocity"]["y"],
-                        "vz": data["velocity"]["z"],
-                        "pressure": round(pressure, 2),
-                    }
-                    save_and_send(collection, FORGING_MACHINE_ID, FORGING_API_MACHINE_ID, readings)
-                else:
-                    print("[Forging] Gagal membaca tekanan, mencoba lagi...")
+                readings = {
+                    "vx": data["velocity"]["x"],
+                    "vy": data["velocity"]["y"],
+                    "vz": data["velocity"]["z"],
+                    "pressure": round(pressure, 2) if pressure is not None else None,
+                }
+                save_and_send(collection, FORGING_MACHINE_ID, FORGING_API_MACHINE_ID, readings)
             except socket.timeout:
                 print("[Forging][TIMEOUT] Tidak ada balasan dari PLC, mencoba lagi...")
             except Exception as e:
