@@ -22,9 +22,9 @@ import adm4280_sensor
 # =======================================================
 # KONFIGURASI MONGODB & API
 # =======================================================
-MONGO_URI = "mongodb+srv://ginanjarnafish_db_user:7MdrOsyavxTn88cl@cluster0.sijeilt.mongodb.net/cmms_db?appName=Cluster0"
-DB_NAME = "cmms"
-API_URL = "https://computerize-maintenance-management-system-production.up.railway.app/api/ml/sensor-data"
+MONGO_URI = os.environ["MONGO_URI"]
+DB_NAME = os.environ.get("MONGO_DB_NAME", "cmms")
+API_URL = os.environ["CMMS_API_URL"]
 
 INDUCTION_MACHINE_ID = "MCH-003"
 INDUCTION_API_MACHINE_ID = "IND-001"

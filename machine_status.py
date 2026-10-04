@@ -25,10 +25,10 @@ import plc_reader
 # =======================================================
 # Production: satu domain lewat nginx (sama dengan API sensor-data).
 # Untuk dev lokal ganti ke "http://localhost:5000/api".
-STATUS_API_BASE_URL = "https://cmms-polmanbandung.site/api"
+STATUS_API_BASE_URL = os.environ.get("CMMS_API_BASE_URL", "https://cmms-polmanbandung.site/api")
 
 # Isi dengan JWT hasil login kalau endpoint ini sudah diproteksi di masa depan.
-STATUS_API_TOKEN = None
+STATUS_API_TOKEN = os.environ.get("CMMS_API_TOKEN") or None
 
 INDUCTION_MACHINE_ID = "IND-001"
 FORGING_MACHINE_ID = "FRG-002"
