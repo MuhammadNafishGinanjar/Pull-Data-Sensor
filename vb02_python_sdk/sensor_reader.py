@@ -34,7 +34,7 @@ class VibrationSensor:
     def connect(self):
         self.device.openDevice()
         self.device.startLoopRead()
-        time.sleep(0.5)
+        time.sleep(1.0)  # tunggu minimal 1 loop penuh (4 × 200ms = 800ms)
 
     def disconnect(self):
         self.device.stopLoopRead()
