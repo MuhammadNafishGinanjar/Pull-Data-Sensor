@@ -1,7 +1,7 @@
 {
   "sensors": [
     {
-      "port": "COM4",
+      "port": "/dev/ttyUSB2",
       "baudrate": 9600,
       "address": 80
     }

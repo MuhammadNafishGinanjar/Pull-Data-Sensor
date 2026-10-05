@@ -6,7 +6,7 @@ import minimalmodbus
 # =======================================================
 # KONFIGURASI MODBUS RTU ADM-4280-C
 # =======================================================
-ADM4280_PORT         = "COM3"
+ADM4280_PORT         = "/dev/ttyUSB1"
 ADM4280_SLAVE_ID     = 1
 ADM4280_BAUDRATE     = 9600
 ADM4280_TIMEOUT      = 1.0
