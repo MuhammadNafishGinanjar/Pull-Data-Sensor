@@ -29,9 +29,9 @@ import sensor_reader
 # =======================================================
 # KONFIGURASI MONGODB & API
 # =======================================================
-MONGO_URI = os.environ["MONGO_URI"]
+MONGO_URI = os.environ["mongodb+srv://ginanjarnafish_db_user:7MdrOsyavxTn88cl@cluster0.sijeilt.mongodb.net/cmms_db?appName=Cluster0"]
 DB_NAME   = os.environ.get("MONGO_DB_NAME", "cmms")
-API_URL   = os.environ["CMMS_API_URL"]
+API_URL   = os.environ["https://computerize-maintenance-management-system-production.up.railway.app/api/ml/sensor-data"]
 
 MACHINE_ID     = "DRL-001"
 API_MACHINE_ID = "DRL-001"
