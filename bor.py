@@ -70,6 +70,7 @@ def main():
     vibr  = sensor_reader.create_default_sensor()
 
     temp.connect()
+    pzem.connect()
     vibr.connect()
 
     print(f"Mesin Bor ({MACHINE_ID}) — mulai membaca sensor. Ctrl+C untuk berhenti.\n")
@@ -90,14 +91,16 @@ def main():
 
             # Daya
             try:
-                pzem.connect()
                 power = pzem.read_measurements()
                 readings["current_a"]      = power["current_a"]
                 readings["active_power_w"] = power["active_power_w"]
             except Exception as e:
                 print(f"[PZEM] Gagal membaca daya: {e}")
-            finally:
-                pzem.disconnect()
+                try:
+                    pzem.disconnect()
+                    pzem.connect()
+                except Exception:
+                    pass
 
             # Getaran
             try:
@@ -120,6 +123,7 @@ def main():
         print("\nDihentikan oleh pengguna.")
     finally:
         temp.disconnect()
+        pzem.disconnect()
         vibr.disconnect()
         client.close()
         print("Selesai.")
